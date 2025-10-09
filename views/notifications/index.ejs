@@ -1,0 +1,41 @@
+<%- include('../partials/header') %>
+</head>
+<body class="bg-light">
+  <!-- Unified, role-aware navbar -->
+<%- include('../partials/nav') %>
+  <main class="container py-5">
+    <h2 class="mb-4 text-center text-primary"><i class="bi bi-bell me-2"></i>Notifications</h2>
+    <div class="card shadow mx-auto" style="max-width: 700px;">
+      <ul class="list-group list-group-flush">
+        <% if (notifications.length === 0) { %>
+          <li class="list-group-item text-center text-muted py-4">No notifications.</li>
+        <% } %>
+        <% notifications.forEach(function(n) { %>
+          <li class="list-group-item d-flex align-items-center <%= n.status === 'unread' ? 'bg-primary bg-opacity-10 border-start border-4 border-primary' : '' %>">
+            <div class="me-3">
+              <i class="bi bi-info-circle-fill fs-4 text-primary"></i>
+            </div>
+            <div class="flex-grow-1">
+              <div class="fw-semibold">
+                <%= n.message %>
+                <% if (n.status === 'unread') { %>
+                  <span class="badge bg-primary ms-2">New</span>
+                <% } %>
+              </div>
+              <% if (n.propertyId) { %>
+                <div class="small text-muted">Property: <a href="/properties/details/<%= n.propertyId._id %>" class="text-decoration-underline text-primary"><%= n.propertyId.title %></a></div>
+              <% } %>
+              <div class="small text-secondary"><%= n.createdAt.toLocaleString() %></div>
+            </div>
+            <form method="POST" action="/notifications/<%= n._id %>?_method=DELETE" class="ms-auto">
+              <button class="btn btn-outline-danger btn-sm">Delete</button>
+            </form>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+  </main>
+ 
+
+</body>
+</html>
