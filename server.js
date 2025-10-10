@@ -68,18 +68,26 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// session configuration for login through https:
+app.set('trust proxy', 1);
+
 // 1. Session middleware (must be first)
 app.use(session({
   secret: process.env.SESSION_SECRET || "keyboardcat",
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    collectionName: "sessions",
+  }),
   cookie: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // allow cross-site cookies
+    maxAge: 1000 * 60 * 60 * 24 // 1 day
   }
 }));
+
 
 //// ---------------------------------------------
 // 🔹 Global Middleware: Pass User + Notifications to All Views
