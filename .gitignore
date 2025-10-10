@@ -36,11 +36,7 @@ logs/
 
 # ==========================================
 # 🖼️ Uploads / User Files
-# ==========================================
-uploads/
-public/uploads/
-uploads/*
-!uploads/.gitkeep
+
 
 # ==========================================
 # 🧩 Editor / IDE Config
