@@ -23,27 +23,35 @@
         <% } %>
       </ul>
       <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
-        <% if (currentUserRole === 'owner' || currentUserRole === 'renter') { %>
-          <li class="nav-item me-2">
-            <a href="/notifications" class="nav-link position-relative" title="Notifications">
-              <i class="bi bi-bell fs-5 text-warning"></i>
-              <% if (typeof unreadCount !== 'undefined' && unreadCount > 0) { %>
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"><%= unreadCount %></span>
-              <% } %>
-            </a>
-          </li>
-        <% } %>
+       <% if (currentUserRole === 'owner' || currentUserRole === 'renter' || currentUserRole === 'admin') { %>
+  <li class="nav-item me-2">
+    <a href="/notifications" class="nav-link position-relative" title="Notifications">
+      <i class="bi bi-bell fs-5 text-warning"></i>
+      <% if (unreadCount > 0) { %>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+          <%= unreadCount %>
+        </span>
+      <% } %>
+    </a>
+  </li>
+<% } %>
+
         <% if (!currentUserId) { %>
           <li class="nav-item"><a href="/auth/login" class="nav-link">Login</a></li>
           <li class="nav-item"><a href="/auth/signup" class="nav-link">Signup</a></li>
         <% } else { %>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <% if (currentUser && currentUser.profilePic) { %>
-                <img src="<%= currentUser.profilePic %>" class="rounded-circle border border-warning me-2" style="width:32px;height:32px;object-fit:cover;" alt="profile">
-              <% } else { %>
-                <span class="rounded-circle bg-warning d-inline-flex align-items-center justify-content-center me-2" style="width:32px;height:32px;">?</span>
-              <% } %>
+  <% if (currentUser && currentUser.profilePic) { %>
+  <img src="<%= currentUser.profilePic %>" class="rounded-circle border border-warning me-2"
+       style="width:32px;height:32px;object-fit:cover;" alt="profile">
+<% } else { %>
+  <img src="/images/default-avatar.png" class="rounded-circle border border-warning me-2"
+       style="width:32px;height:32px;object-fit:cover;" alt="default">
+<% } %>
+
+
+
               <span><%= currentUser ? currentUser.name : '' %></span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">

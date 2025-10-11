@@ -52,7 +52,12 @@ router.post("/me/edit", isAuthenticated, upload.single("profilePic"), async (req
         user.password = password;
       }
     }
+
     await user.save();
+
+    // ✅ Add this line — keeps session updated so navbar shows new image
+    req.session.user = user.toObject();
+
     const userData = await User.findById(req.session.userId).lean();
     res.render("profile/me", { user: userData, error });
   } catch (error) {
@@ -63,5 +68,6 @@ router.post("/me/edit", isAuthenticated, upload.single("profilePic"), async (req
     });
   }
 });
+
 
 module.exports = router;

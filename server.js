@@ -30,7 +30,7 @@ const autoApprovePendingProperties = require('./utils/autoApprove');
 const app = express();
 
 
-
+app.use("/uploads", express.static(path.join(__dirname, "uploads")))
 app.use(express.static(path.join(__dirname, "public")));
 // view engine
 app.set("view engine", "ejs");
@@ -95,20 +95,17 @@ app.use(session({
 app.use(async (req, res, next) => {
   try {
     if (req.session.userId) {
-      // Make current user data available in EJS
       res.locals.currentUserId = req.session.userId;
       res.locals.currentUserRole = req.session.role;
       res.locals.currentUser = req.session.user || null;
 
-      // Count unread notifications
       const unreadCount = await Notification.countDocuments({
         receiverId: req.session.userId,
-        isRead: false,
+        status: "unread"
       });
 
       res.locals.unreadCount = unreadCount;
     } else {
-      // No logged-in user
       res.locals.currentUserId = null;
       res.locals.currentUserRole = null;
       res.locals.currentUser = null;

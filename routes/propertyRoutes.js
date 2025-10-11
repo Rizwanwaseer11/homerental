@@ -3,6 +3,7 @@ const Property = require("../models/property");
 const { isAuthenticated, isOwner } = require("../middlewares/auth");
 const multer = require("multer");
 const path = require("path");
+
 // simple multer disk storage (for production use S3/Cloudinary)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, "..", "public", "uploads")),
@@ -94,7 +95,7 @@ router.get('/:id/edit', isAuthenticated, isOwner, async (req, res) => {
   const prop = await Property.findById(req.params.id).lean();
   if (!prop) return res.status(404).send('Not found');
   if (String(prop.ownerId) !== String(req.session.userId)) return res.status(403).send('Not allowed');
-  res.render('properties/edit', { property: prop, csrfToken: req.csrfToken() });
+  res.render('properties/edit', { property: prop });
 });
 
 // Update property (owner)
@@ -117,7 +118,7 @@ router.put('/:id/edit', isAuthenticated, isOwner, upload.array('images', 8), asy
   }
   prop.featured = !!featured;
   await prop.save();
-  res.redirect('/' + prop._id);
+  res.redirect('/properties/' + prop._id);
 });
 
 
@@ -169,20 +170,38 @@ router.post( "/add",
 
 // Property detail
 
+// Property detail
 router.get("/:id", async (req, res) => {
   try {
     if (!req.session.userId) {
       req.session.message = "Please log in or sign up to view property details.";
       return res.redirect("/auth/login?redirect=/properties/" + req.params.id + "&signup=1");
     }
+
     const prop = await Property.findById(req.params.id).lean();
-    if (!prop) return res.status(404).send("Not found");
-    res.render("properties/details", { property: prop,  });
+    if (!prop) return res.status(404).send("Property not found");
+
+    res.render("properties/details", {
+      property: prop, // ✅ FIXED: send the fetched property
+      currentUserRole: req.session.role || null,
+      currentUserId: req.session.userId || null,
+      viewAll: false,
+      q: "",
+      city: "",
+      category: "",
+      minPrice: "",
+      maxPrice: "",
+      total: 0,
+      limit: 0,
+      page: 1,
+    });
   } catch (err) {
-    console.error(err);
+    console.error("Error loading property details:", err);
     res.status(500).send("Server error");
   }
 });
+
+
 
 // Owner update status or delete (basic)
 router.post("/:id/status", isAuthenticated, isOwner, async (req, res) => {
@@ -197,16 +216,32 @@ router.post("/:id/status", isAuthenticated, isOwner, async (req, res) => {
   } catch (err) { console.error(err); res.status(500).send("Server error"); }
 });
 
+// DELETE PROPERTY (OWNER ONLY)
 router.delete("/:id", isAuthenticated, isOwner, async (req, res) => {
   try {
-  const prop = await Property.findById(req.params.id).lean();
-    if (!prop) return res.status(404).send("Not found");
-    if (!prop.ownerId.equals(req.session.userId)) return res.status(403).send("Not allowed");
-    await prop.remove();
-    res.redirect("/");
-  } catch (err) { console.error(err); res.status(500).send("Server error"); }
-});
+    const prop = await Property.findById(req.params.id); // ✅ no .lean()
 
+    if (!prop) {
+      console.log("Property not found");
+      return res.status(404).send("Property not found");
+    }
+
+    // ✅ Ensure only the owner can delete
+    if (String(prop.ownerId) !== String(req.session.userId)) {
+      console.log("Unauthorized delete attempt");
+      return res.status(403).send("Not allowed");
+    }
+
+    // ✅ Delete the property
+    await Property.findByIdAndDelete(req.params.id);
+
+    console.log("Property deleted successfully");
+    res.redirect("/properties"); // redirect to properties list
+  } catch (err) {
+    console.error("Error deleting property:", err);
+    res.status(500).send("Server error while deleting property");
+  }
+});
 
 
 module.exports = router;
