@@ -22,9 +22,17 @@
                   <span class="badge bg-primary ms-2">New</span>
                 <% } %>
               </div>
-              <% if (n.propertyId) { %>
-                <div class="small text-muted">Property: <a href="/properties/details/<%= n.propertyId._id %>" class="text-decoration-underline text-primary"><%= n.propertyId.title %></a></div>
-              <% } %>
+<% if (n.bookingId) { %>
+  <a href="/orders/details/<%= n.bookingId._id %>" class="text-decoration-underline text-primary">
+    <%= n.propertyId ? n.propertyId.title : "Property" %>
+  </a>
+<% } else { %>
+  <span class="text-muted"><%= n.propertyId ? n.propertyId.title : "Property" %></span>
+<% } %>
+
+
+
+
               <div class="small text-secondary"><%= n.createdAt.toLocaleString() %></div>
             </div>
             <form method="POST" action="/notifications/<%= n._id %>?_method=DELETE" class="ms-auto">

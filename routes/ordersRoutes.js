@@ -50,19 +50,27 @@ router.post("/:id/reject", isAuthenticated, async (req, res) => {
 router.get("/details/:id", isAuthenticated, async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
-      .populate({ path: "propertyId", populate: { path: "ownerId" } })
+      .populate({ path: "propertyId", model: "Property", populate: { path: "ownerId" } }) // 👈 added model: "Property"
       .populate("renterId");
+
     if (!booking) return res.status(404).send("Order not found");
-    // Only owner or renter can view
-    const isOwner = booking.propertyId && booking.propertyId.ownerId && String(booking.propertyId.ownerId._id) === String(req.session.userId);
+
+    const isOwner =
+      booking.propertyId &&
+      booking.propertyId.ownerId &&
+      String(booking.propertyId.ownerId._id) === String(req.session.userId);
+
     const isRenter = String(booking.renterId._id) === String(req.session.userId);
+
     if (!isOwner && !isRenter) return res.status(403).send("Not allowed");
+
     res.render("orders/details", { booking, isOwner, isRenter });
   } catch (err) {
     console.error(err);
     res.status(500).send("Server error");
   }
 });
+
 
 // User orders page: list bookings for current user (renter)
 router.get("/my", isAuthenticated, async (req, res) => {

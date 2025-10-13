@@ -16,9 +16,10 @@ router.get("/", isAuthenticated, async (req, res) => {
 
     // Fetch all notifications for the user
     const notifications = await Notification.find({ receiverId: userId })
-      .populate({ path: "propertyId", model: "property" })
-      .sort({ createdAt: -1 })
-      .lean();
+       .populate({ path: "propertyId", model: "property" })
+  .populate({ path: "bookingId", model: "Booking" }) // ✅ add this line
+  .sort({ createdAt: -1 })
+  .lean();
 
     res.render("notifications/index", { notifications });
   } catch (err) {
