@@ -29,5 +29,6 @@ const propertySchema = new mongoose.Schema({
 propertySchema.index({ title: "text", description: "text" });
 
 // ✅ Fix: use existing model if it exists
-module.exports = mongoose.models.property || mongoose.model("property", propertySchema)
+module.exports = mongoose.model("Property", propertySchema);
+
 

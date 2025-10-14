@@ -25,12 +25,11 @@ router.get("/:id", isAuthenticated, async (req, res) => {
       return res.status(403).send("Not allowed");
     }
 
-    // Always send these variables so EJS never breaks
     res.render("bookings/details", {
       booking,
       property,
-      alreadyBooked: false, // default
-      currentUserRole: req.session.role, // assumed stored in session
+      alreadyBooked: false,
+      currentUserRole: req.session.role,
       currentUserId: req.session.userId
     });
   } catch (err) {
@@ -40,7 +39,7 @@ router.get("/:id", isAuthenticated, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// POST: Create new booking
+// POST: Create new booking (Renter books property)
 // ---------------------------------------------------------------------------
 router.post("/create/:propertyId", isAuthenticated, isRenter, async (req, res) => {
   try {
@@ -50,7 +49,7 @@ router.post("/create/:propertyId", isAuthenticated, isRenter, async (req, res) =
       return res.status(400).send("Property not available");
     }
 
-    // Check if renter already has a booking for this property
+    // Check if renter already has a booking
     const existingBooking = await Booking.findOne({
       renterId: req.session.userId,
       propertyId,
@@ -58,7 +57,6 @@ router.post("/create/:propertyId", isAuthenticated, isRenter, async (req, res) =
     });
 
     if (existingBooking) {
-      // Return booking details with "alreadyBooked" message
       return res.status(400).render("bookings/details", {
         booking: existingBooking,
         property: prop,
@@ -82,10 +80,11 @@ router.post("/create/:propertyId", isAuthenticated, isRenter, async (req, res) =
 
     await booking.save();
 
-    // Notify property owner
+    // ✅ Notify property owner (with bookingId)
     await Notification.create({
       receiverId: prop.ownerId,
       propertyId: prop._id,
+      bookingId: booking._id, // 👈 critical
       message: `New booking request for your property: ${prop.title}`
     });
 
@@ -118,10 +117,11 @@ router.post("/:id/approve", isAuthenticated, async (req, res) => {
     property.status = "rented";
     await property.save();
 
-    // Notify renter about approval
+    // ✅ Notify renter (with bookingId)
     await Notification.create({
       receiverId: booking.renterId,
       propertyId: property._id,
+      bookingId: booking._id, // 👈 critical
       message: `Your booking for ${property.title} has been approved!`
     });
 
