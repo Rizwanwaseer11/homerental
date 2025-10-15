@@ -11,15 +11,19 @@ const router = express.Router();
 // ---------------------------------------------------------------------------
 router.get("/:id", isAuthenticated, async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.id);
+    const booking = await Booking.findById(req.params.id)
+      .populate("propertyId")
+      .populate("renterId")
+      .populate("ownerId");
+
     if (!booking) return res.status(404).send("Booking not found");
 
-    const property = await Property.findById(booking.propertyId);
+    const property = booking.propertyId;
     if (!property) return res.status(404).send("Property not found");
 
     // Only owner or renter can view
     if (
-      String(booking.renterId) !== String(req.session.userId) &&
+      String(booking.renterId._id) !== String(req.session.userId) &&
       String(property.ownerId) !== String(req.session.userId)
     ) {
       return res.status(403).send("Not allowed");
@@ -49,6 +53,8 @@ router.post("/create/:propertyId", isAuthenticated, isRenter, async (req, res) =
       return res.status(400).send("Property not available");
     }
 
+    const ownerId = String(prop.ownerId);
+
     // Check if renter already has a booking
     const existingBooking = await Booking.findOne({
       renterId: req.session.userId,
@@ -70,6 +76,7 @@ router.post("/create/:propertyId", isAuthenticated, isRenter, async (req, res) =
     const booking = new Booking({
       renterId: req.session.userId,
       propertyId,
+      ownerId,
       status: "pending",
       payment: {
         amount: prop.price,
@@ -84,7 +91,7 @@ router.post("/create/:propertyId", isAuthenticated, isRenter, async (req, res) =
     await Notification.create({
       receiverId: prop.ownerId,
       propertyId: prop._id,
-      bookingId: booking._id, // 👈 critical
+      bookingId: booking._id,
       message: `New booking request for your property: ${prop.title}`
     });
 
@@ -121,13 +128,47 @@ router.post("/:id/approve", isAuthenticated, async (req, res) => {
     await Notification.create({
       receiverId: booking.renterId,
       propertyId: property._id,
-      bookingId: booking._id, // 👈 critical
+      bookingId: booking._id,
       message: `Your booking for ${property.title} has been approved!`
     });
 
     res.redirect("/bookings/" + booking._id);
   } catch (err) {
     console.error("Error approving booking:", err);
+    res.status(500).send("Server error");
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST: Owner rejects booking
+// ---------------------------------------------------------------------------
+router.post("/:id/reject", isAuthenticated, async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).send("Booking not found");
+
+    const property = await Property.findById(booking.propertyId);
+    if (!property) return res.status(404).send("Property not found");
+
+    // Only property owner can reject
+    if (String(property.ownerId) !== String(req.session.userId)) {
+      return res.status(403).send("Not allowed");
+    }
+
+    booking.status = "rejected";
+    await booking.save();
+
+    // ✅ Notify renter
+    await Notification.create({
+      receiverId: booking.renterId,
+      propertyId: property._id,
+      bookingId: booking._id,
+      message: `Your booking for ${property.title} has been rejected.`,
+    });
+
+    res.redirect("/bookings/" + booking._id);
+  } catch (err) {
+    console.error("Error rejecting booking:", err);
     res.status(500).send("Server error");
   }
 });

@@ -40,7 +40,8 @@
                     <span class="badge bg-danger">Rejected</span>
                   <% } %>
                 </td>
-                <td>Rs <%= b.payment.amount %></td>
+                <td>Rs <%= b.payment && b.payment.amount ? b.payment.amount : 'N/A' %></td>
+
                 <td><%= b.createdAt.toLocaleString() %></td>
                 <td>
                   <% if (b.status === 'pending') { %>
@@ -54,7 +55,7 @@
                     </form>
                   <% } else if (b.status === 'confirmed') { %>
                     <span class="text-success">Accepted</span>
-                  <% } else if (b.status === 'cancelled') { %>
+                  <% } else if (b.status === 'rejected') { %>
                     <span class="text-danger">Rejected</span>
                   <% } %>
                 </td>

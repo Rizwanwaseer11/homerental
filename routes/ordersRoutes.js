@@ -30,7 +30,7 @@ router.post("/:id/reject", isAuthenticated, async (req, res) => {
     const property = await Property.findById(booking.propertyId);
     if (!property) return res.status(404).send("Property not found");
     if (String(property.ownerId) !== String(req.session.userId)) return res.status(403).send("Not allowed");
-    booking.status = "cancelled";
+    booking.status = "rejected";
     await booking.save();
     // Notify renter
     await Notification.create({

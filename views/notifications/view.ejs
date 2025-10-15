@@ -1,104 +1,43 @@
 <%- include('../partials/header') %>
 </head>
-<body>
-  <%- include('../partials/nav', { currentUserId, currentUserRole }) %>
+<body class="bg-light">
+  <%- include('../partials/nav') %>
 
-  <main class="container my-5">
-    <div class="row justify-content-center">
-      <div class="col-lg-8 col-xl-7">
-        <div class="card shadow border-0">
-          <div class="card-body p-4">
-            <h2 class="h4 mb-4 text-primary fw-bold">
-              <i class="bi bi-bell me-2"></i>Notification Details
-            </h2>
+  <main class="container py-5">
+    <h3 class="text-primary text-center mb-4">
+      <i class="bi bi-info-circle me-2"></i> Notification Details
+    </h3>
 
-            <% if (notification && booking && booking.propertyId) { %>
-              <!-- Property Info -->
-              <div class="mb-3">
-                <div class="fw-semibold">Property:</div>
-                <a href="/properties/<%= booking.propertyId._id %>" 
-                   class="text-decoration-none text-primary fw-bold">
-                   <%= booking.propertyId.title %>
-                </a>
-              </div>
+    <div class="card shadow p-4">
+      <h5 class="text-success mb-3">Property Details</h5>
+      <p><strong>Title:</strong> <%= property?.title || 'N/A' %></p>
+      <p><strong>Price:</strong> $<%= property?.price || 'N/A' %></p>
+      <p><strong>Location:</strong> <%= property?.location || 'N/A' %></p>
 
-              <!-- Booking & Payment Info -->
-              <div class="mb-2">
-                <strong>Status:</strong> 
-                <span class="fw-semibold"><%= booking.status %></span>
-              </div>
-              <% if (booking.payment) { %>
-                <div class="mb-2"><strong>Amount:</strong> Rs <%= booking.payment.amount %></div>
-                <div class="mb-2"><strong>Payment Method:</strong> <%= booking.payment.method %></div>
-              <% } %>
-              <div class="mb-2">
-                <strong>Booked At:</strong> 
-                <%= new Date(booking.createdAt).toLocaleString() %>
-              </div>
+      <hr>
 
-              <!-- Notification Message -->
-              <div class="alert alert-info mt-3">
-                <i class="bi bi-info-circle me-2"></i>
-                <%= notification.message || 'No message provided.' %>
-              </div>
+      <h5 class="text-success mb-3">Booking Details</h5>
+      <p><strong>Status:</strong> <%= booking?.status || 'N/A' %></p>
+      <p><strong>Message:</strong> <%= notification?.message || 'N/A' %></p>
 
-              <hr>
+      <hr>
 
-              <!-- Role-based Information -->
-              <% if (userRole === 'owner') { %>
-                <h5 class="text-success mb-2">Renter Details</h5>
-                <p><strong>Name:</strong> <%= booking.renterId?.name || 'N/A' %></p>
-                <p><strong>Email:</strong> <%= booking.renterId?.email || 'N/A' %></p>
+      <% if (userRole === 'owner') { %>
+        <h5 class="text-success mb-2">Renter Details</h5>
+        <p><strong>Name:</strong> <%= renter?.name || 'N/A' %></p>
+        <p><strong>Email:</strong> <%= renter?.email || 'N/A' %></p>
+        <p><strong>Phone:</strong> <%= renter?.phone || 'N/A' %></p>
+      <% } else { %>
+        <h5 class="text-success mb-2">Owner Details</h5>
+        <p><strong>Name:</strong> <%= owner?.name || 'N/A' %></p>
+        <p><strong>Email:</strong> <%= owner?.email || 'N/A' %></p>
+        <p><strong>Phone:</strong> <%= owner?.phone || 'N/A' %></p>
+      <% } %>
 
-                <% if (booking.status === 'pending') { %>
-                  <form method="POST" action="/bookings/<%= booking._id %>/approve" class="mt-4">
-                    <button class="btn btn-success px-4">Approve Booking</button>
-                  </form>
-                <% } %>
-
-              <% } else if (userRole === 'renter') { %>
-                <h5 class="text-success mb-2">Owner Details</h5>
-                <p><strong>Name:</strong> <%= booking.ownerId?.name || 'N/A' %></p>
-                <p><strong>Email:</strong> <%= booking.ownerId?.email || 'N/A' %></p>
-
-                <% if (booking.status === 'confirmed') { %>
-                  <div class="mt-4 alert alert-success">
-                    <i class="bi bi-check-circle me-2"></i>
-                    Your booking has been approved!
-                  </div>
-                <% } else if (booking.status === 'pending') { %>
-                  <div class="mt-4 alert alert-warning">
-                    <i class="bi bi-hourglass-split me-2"></i>
-                    Waiting for owner approval...
-                  </div>
-                <% } else if (booking.status === 'rejected') { %>
-                  <div class="mt-4 alert alert-danger">
-                    <i class="bi bi-x-circle me-2"></i>
-                    Your booking request was rejected.
-                  </div>
-                <% } %>
-              <% } %>
-
-              <hr>
-
-              <!-- Property Details -->
-              <h5 class="text-info mb-2">Property Details</h5>
-              <p><strong>Location:</strong> <%= booking.propertyId.location?.fullLocation || booking.propertyId.location?.city || 'N/A' %></p>
-              <p><strong>Price:</strong> Rs <%= booking.propertyId.price %></p>
-
-              <div class="d-flex justify-content-between mt-4">
-                <a href="/notifications" class="btn btn-secondary">
-                  <i class="bi bi-arrow-left"></i> Back
-                </a>
-
-               
-              </div>
-
-            <% } else { %>
-              <div class="alert alert-warning">Notification or booking not found.</div>
-            <% } %>
-          </div>
-        </div>
+      <div class="mt-4">
+        <a href="/notifications" class="btn btn-secondary">
+          <i class="bi bi-arrow-left"></i> Back to Notifications
+        </a>
       </div>
     </div>
   </main>

@@ -1,101 +1,90 @@
-// routes/notifications.js
+// routes/notificationRoutes.js
 const express = require("express");
 const router = express.Router();
-const Notification = require("../models/notification");
+const Notification = require("../models/Notification");
 const Booking = require("../models/bookings");
 const Property = require("../models/property");
+const User = require("../models/users");
 const { isAuthenticated } = require("../middlewares/auth");
 
-// ✅ Get all notifications for logged-in user
+// =========================
+// SHOW ALL NOTIFICATIONS
+// =========================
 router.get("/", isAuthenticated, async (req, res) => {
   try {
-    const userId = req.session.userId;
-
-    // Mark unread notifications as read
-    await Notification.updateMany(
-      { receiverId: userId, status: "unread" },
-      { $set: { status: "read" } }
-    );
-
-    // Fetch all notifications
-    const rawNotifications = await Notification.find({ receiverId: userId })
-      .populate({ path: "propertyId", model: "Property" })
+    const notifications = await Notification.find({ receiverId: req.session.userId })
       .populate({
         path: "bookingId",
-        model: "Booking",
-        populate: [
-          { path: "renterId", model: "User" },
-          { path: "ownerId", model: "User" },
-          { path: "propertyId", model: "Property" }
-        ],
+        populate: { path: "propertyId", select: "title price location ownerId" }
       })
-      .sort({ createdAt: -1 })
       .lean();
 
-    // ✅ Build booking detail URL depending on user role
-    const notifications = rawNotifications.map((n) => ({
-      ...n,
-      bookingUrl: n.bookingId
-        ? `/notifications/view/${n._id}`
-        : null,
-    }));
-
-    res.render("notifications/index", { notifications });
+    res.render("notifications/view", {
+      notifications,
+      userRole: req.session.role || "renter", // ✅ always defined
+    });
   } catch (err) {
-    console.error("Error fetching notifications:", err);
-    res.status(500).send("Server error");
+    console.error(err);
+    res.status(500).send("Server Error");
   }
 });
 
-
-// ✅ View single notification details (home + renter/owner info)
+// =========================
+// VIEW SINGLE NOTIFICATION DETAILS
+// =========================
 router.get("/view/:id", isAuthenticated, async (req, res) => {
   try {
-    const userId = req.session.userId;
-
     const notification = await Notification.findById(req.params.id)
       .populate({
         path: "bookingId",
-        model: "Booking",
         populate: [
-          { path: "renterId", model: "User" },
-          { path: "ownerId", model: "User" },
-          { path: "propertyId", model: "Property" }
+          { path: "propertyId", select: "title price location ownerId" },
+          { path: "renterId", select: "name email phone" }
         ],
       })
       .lean();
 
-    if (!notification) {
-      return res.status(404).send("Notification not found");
-    }
+    if (!notification) return res.status(404).send("Notification not found");
 
     const booking = notification.bookingId;
-    if (!booking) {
-      return res.status(404).send("Booking not found");
+    const property = booking?.propertyId || null;
+
+    let owner = null;
+    let renter = null;
+
+    if (property?.ownerId) {
+      owner = await User.findById(property.ownerId).select("name email phone").lean();
     }
 
-    // ✅ Render a page with details (we’ll make EJS below)
-    res.render("notifications/view", {
+    if (booking?.renterId) {
+      renter = await User.findById(booking.renterId).select("name email phone").lean();
+    }
+
+    // ✅ render with all required variables
+    res.render("notifications/single", {
       notification,
       booking,
-      userRole: req.session.role,
-      currentUserId: userId,
+      property,
+      owner,
+      renter,
+      userRole: req.session.role || "renter",
     });
   } catch (err) {
-    console.error("Error fetching notification details:", err);
-    res.status(500).send("Server error");
+    console.error(err);
+    res.status(500).send("Server Error");
   }
 });
 
-
-// ✅ Delete notification
+// =========================
+// DELETE NOTIFICATION
+// =========================
 router.delete("/:id", isAuthenticated, async (req, res) => {
   try {
     await Notification.findByIdAndDelete(req.params.id);
     res.redirect("/notifications");
   } catch (err) {
-    console.error("Error deleting notification:", err);
-    res.status(500).send("Server error");
+    console.error(err);
+    res.status(500).send("Server Error");
   }
 });
 
