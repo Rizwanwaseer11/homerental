@@ -1,43 +1,8 @@
-<%- include('partials/header') %>
+<%- include('../partials/header') %>
 <body class="bg-light">
   <!-- Unified, role-aware navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow sticky-top">
-    <div class="container">
-      <a href="/" class="navbar-brand fw-bold fs-3">HomeRent</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
-          <li class="nav-item"><a href="/about" class="nav-link">About</a></li>
-          <li class="nav-item"><a href="/properties" class="nav-link">Properties</a></li>
-          <li class="nav-item"><a href="/admin" class="nav-link active">Admin</a></li>
-        </ul>
-        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
-          <% if (!currentUserId) { %>
-            <li class="nav-item"><a href="/auth/login" class="nav-link">Login</a></li>
-            <li class="nav-item"><a href="/auth/signup" class="nav-link">Signup</a></li>
-          <% } else { %>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <% if (currentUser && currentUser.profilePic) { %>
-                  <img src="<%= currentUser.profilePic %>" class="rounded-circle border border-warning me-2" style="width:32px;height:32px;object-fit:cover;" alt="profile">
-                <% } else { %>
-                  <span class="rounded-circle bg-warning d-inline-flex align-items-center justify-content-center me-2" style="width:32px;height:32px;">?</span>
-                <% } %>
-                <span><%= currentUser ? currentUser.name : '' %></span>
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                <li><a class="dropdown-item" href="/profile/me">Profile</a></li>
-                <li><a class="dropdown-item" href="/auth/logout">Logout</a></li>
-              </ul>
-            </li>
-          <% } %>
-        </ul>
-      </div>
-    </div>
-  </nav>
+  <%- include('../partials/nav') %>
+ 
   <main class="container py-5">
     <h1 class="mb-4 text-center text-primary">Admin Dashboard</h1>
     <div class="row g-4">
@@ -53,11 +18,11 @@
                   <div class="fw-bold"><%= p.title %></div>
                   <div class="small text-muted mb-1"><%= p.location.city %> &bull; <%= p.category %></div>
                   <form method="POST" action="/admin/properties/<%= p._id %>/approve" class="d-inline">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    
                     <button class="btn btn-success btn-sm">Approve</button>
                   </form>
                   <form method="POST" action="/admin/properties/<%= p._id %>/reject" class="d-inline ms-2">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    
                     <button class="btn btn-danger btn-sm">Reject</button>
                   </form>
                 </div>

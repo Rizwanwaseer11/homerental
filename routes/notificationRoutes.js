@@ -15,16 +15,17 @@ router.get("/", isAuthenticated, async (req, res) => {
     const notifications = await Notification.find({ receiverId: req.session.userId })
       .populate({
         path: "bookingId",
-        populate: { path: "propertyId", select: "title price location ownerId" }
+        populate: { path: "propertyId", select: "title price location ownerId" },
       })
+      .sort({ createdAt: -1 })
       .lean();
 
-    res.render("notifications/view", {
+    res.render("notifications/index", {
       notifications,
-      userRole: req.session.role || "renter", // ✅ always defined
+      userRole: req.session.role || "renter",
     });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Notification list error:", err);
     res.status(500).send("Server Error");
   }
 });
@@ -38,40 +39,40 @@ router.get("/view/:id", isAuthenticated, async (req, res) => {
       .populate({
         path: "bookingId",
         populate: [
-          { path: "propertyId", select: "title price location ownerId" },
-          { path: "renterId", select: "name email phone" }
+          { path: "propertyId", model: "Property" },
+          { path: "renterId", model: "User" },
         ],
       })
       .lean();
 
     if (!notification) return res.status(404).send("Notification not found");
 
-    const booking = notification.bookingId;
-    const property = booking?.propertyId || null;
+    const booking = notification.bookingId || {};
+    const property = booking.propertyId || {};
+    const renter = booking.renterId || {};
+    let owner = {};
 
-    let owner = null;
-    let renter = null;
-
-    if (property?.ownerId) {
-      owner = await User.findById(property.ownerId).select("name email phone").lean();
+    if (property && property.ownerId) {
+      owner = await User.findById(property.ownerId).lean() || {};
     }
 
-    if (booking?.renterId) {
-      renter = await User.findById(booking.renterId).select("name email phone").lean();
-    }
+    const currentUserId = req.session.userId?.toString();
+    const isOwner = currentUserId === property?.ownerId?.toString();
+    const isRenter = currentUserId === renter?._id?.toString();
 
-    // ✅ render with all required variables
-    res.render("notifications/single", {
+    res.render("notifications/view", {
       notification,
       booking,
       property,
-      owner,
       renter,
-      userRole: req.session.role || "renter",
+      owner,
+      isOwner,
+      isRenter,
+      userRole: req.session.role,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Server Error");
+    console.error("❌ Notification view error:", err);
+    res.status(500).send("Error loading notification details");
   }
 });
 
