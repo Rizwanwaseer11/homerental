@@ -152,6 +152,6 @@ to discuss what you would like to change.
 -------------------------------------
 👨‍💻 AUTHOR
 -------------------------------------
-Developed by: [Rizwan Ahned Waseer]
+Developed by: [Rizwan Ahmed Waseer]
 Contact: [Email: rizwanwaseer98@gmail.com , Github: https://github.com/Rizwanwaseer11 ]
 
