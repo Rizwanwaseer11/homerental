@@ -183,6 +183,9 @@ router.post("/:id/approve", isAuthenticated, async (req, res) => {
 // ---------------------------------------------------------------------------
 // POST: Owner rejects booking
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// POST: Owner rejects booking
+// ---------------------------------------------------------------------------
 router.post("/:id/reject", isAuthenticated, async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
@@ -201,6 +204,10 @@ router.post("/:id/reject", isAuthenticated, async (req, res) => {
 
     booking.status = "rejected";
     await booking.save();
+
+    // 🟢 Reset property status to available
+    property.status = "available";
+    await property.save();
 
     // ✅ Notify renter
     await Notification.create({
@@ -224,6 +231,7 @@ router.post("/:id/reject", isAuthenticated, async (req, res) => {
         <p>— Home Rental System</p>
         `
       );
+      console.log("✅ Email sent to renter for rejection:", booking.renterId.email);
     } catch (emailErr) {
       console.error("Email rejection notice failed:", emailErr);
     }
@@ -234,5 +242,6 @@ router.post("/:id/reject", isAuthenticated, async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
 
 module.exports = router;
