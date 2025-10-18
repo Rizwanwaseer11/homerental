@@ -5,7 +5,7 @@ const router = express.Router();
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const sendEmail = require("../utils/mailer");
- require("dotenv").config();
+require("dotenv").config();
 
 // ======================= SHOW SIGNUP FORM =======================
 router.get("/signup", (req, res) => {
@@ -36,6 +36,7 @@ router.post(
         password,
         role,
       });
+
       await user.save();
 
       // ✅ Send welcome email
@@ -71,12 +72,22 @@ router.post(
   body("password").notEmpty(),
   async (req, res) => {
     const { email, password } = req.body;
+
     try {
-      const user = await User.findOne({ email });
+      const user = await User.findOne({ email }).select("+password");
+
       if (!user)
         return res.status(401).render("auth/login", { error: "Invalid credentials" });
 
+      // console.log("USER FOUND:", {
+      //   _id: user._id,
+      //   email: user.email,
+      //   password: user.password,
+      // });
+
       const ok = await user.comparePassword(password);
+      console.log("PASSWORD MATCH RESULT:", ok);
+
       if (!ok)
         return res.status(401).render("auth/login", { error: "Invalid credentials" });
 
@@ -115,9 +126,7 @@ router.post("/forgot-password", async (req, res) => {
     user.resetTokenExpire = Date.now() + 15 * 60 * 1000; // 15 mins
     await user.save();
 
-    const resetLink = `${req.protocol}://${req.get(
-      "host"
-    )}/reset-password/${token}`;
+    const resetLink = `${req.protocol}://${req.get("host")}/auth/reset-password/${token}`;
 
     await sendEmail(
       user.email,
@@ -161,7 +170,7 @@ router.post("/reset-password/:token", async (req, res) => {
 
     if (!user) return res.status(400).send("Invalid or expired token");
 
-    user.password = await bcrypt.hash(req.body.password, 10);
+    user.password = req.body.password; // ✅ will be auto-hashed by pre-save
     user.resetToken = null;
     user.resetTokenExpire = null;
     await user.save();

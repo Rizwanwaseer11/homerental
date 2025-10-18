@@ -1,7 +1,7 @@
 // routes/notificationRoutes.js
 const express = require("express");
 const router = express.Router();
-const Notification = require("../models/Notification");
+const Notification = require("../models/notification");
 const Booking = require("../models/bookings");
 const Property = require("../models/property");
 const User = require("../models/users");
@@ -33,8 +33,12 @@ router.get("/", isAuthenticated, async (req, res) => {
 // =========================
 // VIEW SINGLE NOTIFICATION DETAILS
 // =========================
+// =========================
+// VIEW SINGLE NOTIFICATION DETAILS
+// =========================
 router.get("/view/:id", isAuthenticated, async (req, res) => {
   try {
+    // ✅ Find notification
     const notification = await Notification.findById(req.params.id)
       .populate({
         path: "bookingId",
@@ -42,10 +46,15 @@ router.get("/view/:id", isAuthenticated, async (req, res) => {
           { path: "propertyId", model: "Property" },
           { path: "renterId", model: "User" },
         ],
-      })
-      .lean();
+      });
 
     if (!notification) return res.status(404).send("Notification not found");
+
+    // ✅ Mark as read (only update the status, no other logic touched)
+    if (notification.status === "unread") {
+      notification.status = "read";
+      await notification.save();
+    }
 
     const booking = notification.bookingId || {};
     const property = booking.propertyId || {};
@@ -53,7 +62,7 @@ router.get("/view/:id", isAuthenticated, async (req, res) => {
     let owner = {};
 
     if (property && property.ownerId) {
-      owner = await User.findById(property.ownerId).lean() || {};
+      owner = (await User.findById(property.ownerId).lean()) || {};
     }
 
     const currentUserId = req.session.userId?.toString();
@@ -61,7 +70,7 @@ router.get("/view/:id", isAuthenticated, async (req, res) => {
     const isRenter = currentUserId === renter?._id?.toString();
 
     res.render("notifications/view", {
-      notification,
+      notification: notification.toObject(),
       booking,
       property,
       renter,
@@ -75,6 +84,7 @@ router.get("/view/:id", isAuthenticated, async (req, res) => {
     res.status(500).send("Error loading notification details");
   }
 });
+
 
 // =========================
 // DELETE NOTIFICATION
