@@ -32,7 +32,7 @@ Built with:
 
 1️⃣ Clone the repository
 -------------------------
-git clone https://github.com/YOUR-USERNAME/home-rent.git
+git clone https://github.com/Rizwanwaseer11/homerental.git
 cd home-rent
 
 2️⃣ Install dependencies
